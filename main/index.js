@@ -3,6 +3,12 @@ const app = express();
 const port = 3000;
 const localHostString = `http://localhost:${port}`  // string literal templayes using acutes `
 
+const callHandlerExample = require('./appCallHandler');
+
+
+const got = require('got');
+const bodyParser = require('body-parser');
+
 
 // get is basically the read
 app.get('/', (req, res) => {        // the / or route is looking for the root url path, which in our case is just http://localhost:port/ 
@@ -72,6 +78,62 @@ app.get("/users/:id1&:id2", function (req, res) {
 
 
 
+app.use(bodyParser.json()); // allows express to properly parse out json using this route type. 
+
+app.post("/userstuff", function (req, res) {
+	console.log(req.body);
+	var name = req.body.user.name;
+    var email = req.body.user.email;
+    
+    // using respones type json
+    var jsonReturnData = {
+        stringOfText: "You sent name = '" + name + "' and email='" + email + "'"
+    }
+    //res.send(jsonReturnData);
+
+    // using response type text
+    res.send("You sent name = '" + name + "' and email='" + email + "'");
+
+    
+
+});
+
+callHandlerExample.callHandlerFunc(app);    // example of how you can move the entire http handler into a different file
+callHandlerExample.callGetUsersAsJsonDataRaw(app);
+callHandlerExample.callUserList(app);
+
 app.listen(port, () => {        // this will listen on the provided port
     console.log(`Example app listening at ${localHostString}`)
-})
+});
+
+
+(async () => {
+    //console.log("made it");
+    const {body} = await got.post('http://localhost:3000/userstuff', {
+        json: {             // this is the "type that is being sent, this corresponds to how the parsing needs to be done"
+                            // refer to app.use(bodyParser.json());
+            user: {         // this is going to set up the data as if it was req.body.user.name or .email
+                name: 'hello',
+                email: 'world'
+            },
+            name: 'hello',      // this will just set up the data as if it was req.body.name or body.email
+            email: 'world'
+        },
+
+        // the repsonse type is important
+        // comes in 3 different flavors, text, json, or buffer
+        // you are probably going to normally need to use text or json
+        //responseType: 'json'
+        responseType: 'text'      // this is the type of response the data MUST BE IN
+        // IF YOU DONT HAVE THE DATA res. RESPONSE DATA CORRECT FOR YOUR POST YOU ARE SCREWED
+        // SO MAKE SURE YOU HAVE THE DATA RESPONDED AS IN JSON FORMAT ORWHATEVER TYPE OF DATA YOU NEED
+        // YOU CAN ALSO DO IT WITH TEXT OR JSON
+    });
+ 
+    // using response type Json
+    //console.log("body: " + body.stringOfText);
+
+    // using response type Text
+    console.log("body: " + body);
+    //=> {hello: 'world'}
+})();
