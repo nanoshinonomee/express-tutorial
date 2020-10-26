@@ -6,8 +6,19 @@ const localHostString = `http://localhost:${port}`  // string literal templayes 
 const callHandlerExample = require('./appCallHandler');
 
 
+
+var mongo = require('mongodb');
+var MongoClient = mongo.MongoClient;
+
+
+const passport = require('passport');
+
 const got = require('got');
 const bodyParser = require('body-parser');
+
+const helmet = require("helmet");
+app.use(helmet());  // adds in the helmet middleware to increase security by removing the headers out of http requests
+// this works after me applying it after writing all the other examples
 
 
 // get is basically the read
@@ -54,11 +65,11 @@ app.get('/testpath', (req, res) => {       // this should happen when going to  
 // http://localhost:3000/user/12345?color=red
 // this would give the id of 12345 and the query of red
 app.get("/user/:id", function (req, res) {
-	var id = req.params.id;
-	var color = req.query.color;
+    var id = req.params.id;
+    var color = req.query.color;
 
-	res.send("Yes? You asked for customer '" + id +
-		"' and passed the color = '" + color + "'");
+    res.send("Yes? You asked for customer '" + id +
+        "' and passed the color = '" + color + "'");
 });
 
 // this example passes in multiple parameters and multiple queries
@@ -72,19 +83,21 @@ app.get("/users/:id1&:id2", function (req, res) {
     var color1 = req.query.color1;
     var color2 = req.query.color2;
 
-	res.send("Yes? You asked for customer ids of  '" + id1 + " and " + id2 +
-		"' and passed the colors = '" + color1 + " and " + color2 + "'");
+    res.send("Yes? You asked for customer ids of  '" + id1 + " and " + id2 +
+        "' and passed the colors = '" + color1 + " and " + color2 + "'");
 });
 
 
 
 app.use(bodyParser.json()); // allows express to properly parse out json using this route type. 
 
+
+
 app.post("/userstuff", function (req, res) {
-	console.log(req.body);
-	var name = req.body.user.name;
+    //console.log(req.body);
+    var name = req.body.user.name;
     var email = req.body.user.email;
-    
+
     // using respones type json
     var jsonReturnData = {
         stringOfText: "You sent name = '" + name + "' and email='" + email + "'"
@@ -94,7 +107,7 @@ app.post("/userstuff", function (req, res) {
     // using response type text
     res.send("You sent name = '" + name + "' and email='" + email + "'");
 
-    
+
 
 });
 
@@ -102,16 +115,29 @@ callHandlerExample.callHandlerFunc(app);    // example of how you can move the e
 callHandlerExample.callGetUsersAsJsonDataRaw(app);
 callHandlerExample.callUserList(app);
 
+
+
+// before I do passport, I need to get a database implemented, looks like I'm going to be using mongoDB
+
+// example using passport called here
+const passportExampleReq = require('./passportExample');
+passportExampleReq.passportExampleFunc(app);
+// need to do a post
+//passportExampleReq.callPassportExample();
+
+
+
+
 app.listen(port, () => {        // this will listen on the provided port
     console.log(`Example app listening at ${localHostString}`)
 });
 
-
+// this is a post using got as an example
 (async () => {
     //console.log("made it");
-    const {body} = await got.post('http://localhost:3000/userstuff', {
+    const { body } = await got.post('http://localhost:3000/userstuff', {
         json: {             // this is the "type that is being sent, this corresponds to how the parsing needs to be done"
-                            // refer to app.use(bodyParser.json());
+            // refer to app.use(bodyParser.json());
             user: {         // this is going to set up the data as if it was req.body.user.name or .email
                 name: 'hello',
                 email: 'world'
@@ -129,11 +155,28 @@ app.listen(port, () => {        // this will listen on the provided port
         // SO MAKE SURE YOU HAVE THE DATA RESPONDED AS IN JSON FORMAT ORWHATEVER TYPE OF DATA YOU NEED
         // YOU CAN ALSO DO IT WITH TEXT OR JSON
     });
- 
+
     // using response type Json
     //console.log("body: " + body.stringOfText);
 
     // using response type Text
-    console.log("body: " + body);
+    //console.log("body: " + body);
     //=> {hello: 'world'}
 })();
+
+
+
+
+
+(async () => {
+    // call the databaseConnection.js
+    const databaseConnectionFile = require('./databaseConnection');
+    await databaseConnectionFile.connectToDatabase();
+    await databaseConnectionFile.createCollectionInDB();
+    //await databaseConnectionFile.insertIntoCollection();
+    await databaseConnectionFile.findInCollection();
+})();
+
+
+
+
