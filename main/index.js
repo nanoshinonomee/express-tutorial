@@ -7,14 +7,34 @@ const callHandlerExample = require('./appCallHandler');
 
 
 
+const websiteStaticDirName = "website_static";
+
+
 var mongo = require('mongodb');
 var MongoClient = mongo.MongoClient;
 
 
-const passport = require('passport');
+
 
 const got = require('got');
 const bodyParser = require('body-parser');
+
+
+app.use(express.static(websiteStaticDirName));  // this allows the static serving of all webpages in the website_static page
+
+// we will piece in the express session for use here
+const expressSession = require('express-session')({
+    secret: 'secretExampleHere',
+    resave: false,  // field forces the session to be saved back to the session store
+    saveUninitialized: false    // field forces a session that is “uninitialized” to be saved to the store
+});
+
+
+
+
+
+
+
 
 const helmet = require("helmet");
 app.use(helmet());  // adds in the helmet middleware to increase security by removing the headers out of http requests
@@ -90,7 +110,7 @@ app.get("/users/:id1&:id2", function (req, res) {
 
 
 app.use(bodyParser.json()); // allows express to properly parse out json using this route type. 
-
+app.use(bodyParser.urlencoded({ extended: true })); // this is for better security I assume
 
 
 app.post("/userstuff", function (req, res) {
@@ -117,13 +137,7 @@ callHandlerExample.callUserList(app);
 
 
 
-// before I do passport, I need to get a database implemented, looks like I'm going to be using mongoDB
 
-// example using passport called here
-const passportExampleReq = require('./passportExample');
-passportExampleReq.passportExampleFunc(app);
-// need to do a post
-//passportExampleReq.callPassportExample();
 
 
 
@@ -176,6 +190,24 @@ app.listen(port, () => {        // this will listen on the provided port
     //await databaseConnectionFile.insertIntoCollection();
     await databaseConnectionFile.findInCollection();
 })();
+
+
+(async () => {
+    // before I do passport, I need to get a database implemented, looks like I'm going to be using mongoDB
+    // I will also use mongoose for easier connecting and data object management
+    const passportExampleReq = require('./passportExample');
+    await passportExampleReq.connectPassportWithMongoose(app);
+
+    // example using passport called here
+    // no longer used
+    //passportExampleReq.passportExampleFunc(app);
+    // need to do a post
+    //passportExampleReq.callPassportExample();
+
+})();
+
+
+
 
 
 

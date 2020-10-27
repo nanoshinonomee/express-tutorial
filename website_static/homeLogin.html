@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title> Home Login </title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="message-box">
+    <h1 id="welcome-message"></h1>
+    <a href="/private">Go to private area</a>
+  </div>
+
+  <script>
+      // this will make a req to the /userPassport route we setup in the passportExample.js
+    const req = new XMLHttpRequest();
+    req.onreadystatechange = function () {      // call back
+      if (req.readyState == 4 && req.status == 200) {       // if successful parameters
+        const user = JSON.parse(req.response).user;
+        document.getElementById("welcome-message").innerText = `Welcome ${user.username}!!`;        // pops up the message box
+      }
+    };
+    req.open("GET", "http://localhost:3000/userPassport", true);        // we set the last param to 'true' to make it asynchronous
+    req.send(); // SEND IT
+  </script>
+</body>
+</html>
