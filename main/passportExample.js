@@ -72,6 +72,8 @@ async function connectPassportWithMongoose(app) {
     const UserDetails = mongoose.model('userInfoCollectionNameInDB', UserDetail, 'userInfoCollectionNameInMongoose');     // we will pass in the user information to the USerDetails
     // the .model creates a model in mongoose for us. 
     // first parameter is the Name of the collection in the Database
+    
+
 
 
     // local authentication with passport
@@ -88,21 +90,25 @@ async function connectPassportWithMongoose(app) {
     const connectEnsureLogin = require('connect-ensure-login');
 
     app.post('/loginPassport', (req, res, next) => {
+        console.log("faileduphere");
         passport.authenticate('local',      // this will use the authenticate method which auths with strats using the 'local' parameter
             (err, user, info) => {
                 if (err) {
+                    console.log("failed1");
                     return next(err);
                 }
 
                 if (!user) {
+                    console.log("failed2");
                     return res.redirect('/loginPassport?info=' + info);     // if the auth fails it goes here
                 }
 
                 req.logIn(user, function (err) {
                     if (err) {
+                        console.log("failed3");
                         return next(err);
                     }
-
+                    console.log("success");
                     return res.redirect('/homeLogin');  // if success goes here
                 });
 
@@ -131,18 +137,48 @@ async function connectPassportWithMongoose(app) {
     );
 
 
-    // TODO: figure out how to check if the USer names are registered yet, check and see if this works,
-    // need to figure out how to check if things exist using the mongoose database.
-
-    //  passport-local-mongoose .register users in our database
-    // using  passport-local-mongoose .register it will salt the password for us
-    UserDetails.register({ username: 'paul', active: false }, 'paulPassword');  // creates the username
-    UserDetails.register({ username: 'jay', active: false }, 'jayPassword');
-    UserDetails.register({ username: 'roy', active: false }, 'royPassword');
+    
 
 
+    // var userDetailRecords = await UserDetails.find({}); // get all the records in the Model that has been created and connected up to
+    // console.log(userDetailRecords.length);
+    // console.log(userDetailRecords[0].username);
+
+    // this will do a check first to see if 
+    var userDetailRecords = await UserDetails.find({ username: 'paul'}); // get all the records in the Model that has been created and connected up to
+    //console.log(userDetailRecords.length);
+    if(userDetailRecords.length == 0){
+        //  passport-local-mongoose .register users in our database
+        // using  passport-local-mongoose .register it will salt the password for us
+        UserDetails.register({ username: 'paul', active: false }, 'paul');  // creates the username
+        console.log("user paul has been created");
+
+        // UserDetails.register({ username: 'jay', active: false }, 'jayPassword');
+        // UserDetails.register({ username: 'roy', active: false }, 'royPassword');
+    }
+
+    // lets learn to delete the database, collection, and record
+    var deleteRecord = false;
+    if(deleteRecord){
+        await UserDetails.deleteOne({ username: 'paul'}, function (err) {
+            if (err) return handleError(err);
+            console.log("deleted username paul");
+          });
+    }
+
+    var deleteCollection = false;
+    if(deleteCollection){
+        UserDetails.collection.drop();
+        console.log(`UserDetails collection dropped.`);
+    }
 
 
+    var deleteDb = false;
+    if(deleteDb){
+        await mongoose.connection.db.dropDatabase();
+        console.log(`${mongoose.connection.db.databaseName} database dropped.`);
+    }
+    
 }
 exports.connectPassportWithMongoose = connectPassportWithMongoose;
 
