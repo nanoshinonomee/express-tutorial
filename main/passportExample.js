@@ -4,6 +4,11 @@ const passport = require('passport');
 const got = require('got');
 const websiteStaticDirName = "website_static";
 
+
+const mongoose = require('mongoose');
+const passportLocalMongoose = require('passport-local-mongoose');
+const connectEnsureLogin = require('connect-ensure-login');
+
 // when using passport, authentication methods and mechanics are known as "strategies"
 // strategies are packaged as modules
 // now below in the passportExampleFunc we use the strategy called 'local'
@@ -51,8 +56,8 @@ async function connectPassportWithMongoose(app) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    const mongoose = require('mongoose');
-    const passportLocalMongoose = require('passport-local-mongoose');
+    
+    
 
     // connect up to the database we will be looking to
     mongoose.connect('mongodb://localhost/MyDatabaseExample', { useNewUrlParser: true, useUnifiedTopology: true });
@@ -84,15 +89,11 @@ async function connectPassportWithMongoose(app) {
     passport.deserializeUser(UserDetails.deserializeUser());    // Deserialize User - callback, invoked on request to deserialize and provide unique cookie (credential)
 
 
-
-
-    // routes for our login passport example
-    const connectEnsureLogin = require('connect-ensure-login');
-
     app.post('/loginPassport', (req, res, next) => {
-        console.log("faileduphere");
+        console.log("uphere1");
         passport.authenticate('local',      // this will use the authenticate method which auths with strats using the 'local' parameter
             (err, user, info) => {
+                console.log("uphere3");
                 if (err) {
                     console.log("failed1");
                     return next(err);
@@ -123,7 +124,11 @@ async function connectPassportWithMongoose(app) {
         connectEnsureLogin.ensureLoggedIn('loginPassport'),        // this guards our routes to make sure we are logged in first
         // connectEnsureLogin.ensureLoggedIn(), NOTE: You can also do it this way just to return to a default home, but we want to redirect to a specific page
         // using ensureLoggedIn();
-        (req, res) => res.sendFile('homeLogin.html', { root: websiteStaticDirName })
+        function(req, res) {
+            console.log("lol");
+            res.sendFile('homeLogin.html', { root: websiteStaticDirName });
+        }
+        //(req, res) => res.sendFile('homeLogin.html', { root: websiteStaticDirName }), 
     );
 
     app.get('/private',
@@ -140,9 +145,9 @@ async function connectPassportWithMongoose(app) {
     
 
 
-    // var userDetailRecords = await UserDetails.find({}); // get all the records in the Model that has been created and connected up to
+    var userDetailRecords = await UserDetails.find({}); // get all the records in the Model that has been created and connected up to
     // console.log(userDetailRecords.length);
-    // console.log(userDetailRecords[0].username);
+    console.log(userDetailRecords[0]);
 
     // this will do a check first to see if 
     var userDetailRecords = await UserDetails.find({ username: 'paul'}); // get all the records in the Model that has been created and connected up to

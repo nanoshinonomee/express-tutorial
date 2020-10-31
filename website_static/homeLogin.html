@@ -21,7 +21,7 @@
         document.getElementById("welcome-message").innerText = `Welcome ${user.username}!!`;        // pops up the message box
       }
     };
-    req.open("GET", "http://localhost:3000/userPassport", true);        // we set the last param to 'true' to make it asynchronous
+    req.open("GET", "/userPassport", true);        // we set the last param to 'true' to make it asynchronous
     req.send(); // SEND IT
   </script>
 </body>
