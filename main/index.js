@@ -351,7 +351,15 @@ app.listen(port, () => {        // this will listen on the provided port
 })();
 
 
+// example of serving a single static file, usually I would not do this I would do a directory
+app.get('/about', (req, res) => {
+    res.sendFile('singlestatic.html', { root: "single_static_file" });
+});
 
+// if yuo do this, you can set it in one single step
+app.use('/aboutTestStatic', express.static('staticdirExample'));
+// now you can go to http://localhost:3000/aboutTestStatic/singlestaticTest.html
+// to see everything in the static directory "staticdirExample"
 
 
 
