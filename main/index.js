@@ -39,9 +39,14 @@ const expressSession = require('express-session')({
 var favicon = require('serve-favicon');
 app.use(favicon("./favicon/favicon.jpg"));
 
+// used for compression with our app
+var compression = require('compression');
+app.use(compression({ filter: shouldCompress }));   // this is a reference to the function, shouldCompress
+// if a response doesn't need to be compressed it should have the no compression header
+
 
 const helmet = require("helmet");
-app.use(helmet());  // adds in the helmet middleware to increase security by removing the headers out of http requests
+app.use(helmet());  // adds in the helmet middleware to increase security by removing some of the headers out of http requests
 // this works after me applying it after writing all the other examples
 
 
@@ -228,4 +233,13 @@ app.use('/aboutTestStatic', express.static('staticdirExample'));
 
 
 
+// this function is for the compression package, if something shouldn't be compressed we can add that header
+function shouldCompress(req, res) {
+    if (req.headers['x-no-compression']) {
+        // don't compress responses with this request header
+        return false
+    }
 
+    // fallback to standard filter function
+    return compression.filter(req, res)
+}
