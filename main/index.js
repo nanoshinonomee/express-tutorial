@@ -1,4 +1,8 @@
+
 const express = require('express');
+var cookieParser = require('cookie-parser')
+var csrf = require('csurf')
+
 const app = express();
 const port = 3000;
 const localHostString = `http://localhost:${port}`  // string literal templayes using acutes `
@@ -25,6 +29,14 @@ const got = require('got');
 const bodyParser = require('body-parser');
 
 
+// if you need to serve a view, you can use EJS in this way, this is needed for csurf and other safety mechanisms.
+app.set('views', websiteStaticDirName);
+app.engine('html', require('ejs').renderFile);
+
+
+
+
+
 app.use(express.static(websiteStaticDirName));  // this allows the static serving of all webpages in the website_static page
 
 // we will piece in the express session for use here
@@ -45,14 +57,38 @@ app.use(compression({ filter: shouldCompress }));   // this is a reference to th
 // if a response doesn't need to be compressed it should have the no compression header
 
 
+
+// adds response time headers automatically
+var responseTime = require('response-time')
+app.use(responseTime())
+// if you need this you can find examples to easily use this in error handling
+// but for now I am not going to include it
+
+
 const helmet = require("helmet");
 app.use(helmet());  // adds in the helmet middleware to increase security by removing some of the headers out of http requests
 // this works after me applying it after writing all the other examples
 
 
+
+
+
+
+
+
+
+
+
+
+
 // get is basically the read
 app.get('/', (req, res) => {        // the / or route is looking for the root url path, which in our case is just http://localhost:port/ 
     res.send('Hello World!')
+    // Cookies that have not been signed
+    //console.log('Cookies: ', req.cookies)     // use this to parse cookies out
+
+    // Cookies that have been signed
+    //console.log('Signed Cookies: ', req.signedCookies)     // use this to parse cookies out
 })
 
 // post creates new resources in the server somehow someway, think of it like writing,
@@ -148,7 +184,66 @@ callHandlerExample.callUserList(app);
 
 
 
+// example of serving a single static file, usually I would not do this I would do a directory
+app.get('/about', (req, res) => {
+    res.sendFile('singlestatic.html', { root: "single_static_file" });
+});
 
+// if yuo do this, you can set it in one single step
+app.use('/aboutTestStatic', express.static('staticdirExample'));
+// now you can go to http://localhost:3000/aboutTestStatic/singlestaticTest.html
+// to see everything in the static directory "staticdirExample"
+
+
+
+// this function is for the compression package, if something shouldn't be compressed we can add that header
+function shouldCompress(req, res) {
+    if (req.headers['x-no-compression']) {
+        // don't compress responses with this request header
+        return false
+    }
+
+    // fallback to standard filter function
+    return compression.filter(req, res)
+}
+
+
+// setup route middlewares
+var csrfProtection = csrf({ cookie: true})
+var parseForm = bodyParser.urlencoded({ extended: false })
+app.use(cookieParser());
+
+
+// what is the difference between res.sendFile and res.render?
+// you need to use render when you have a templating engine in use, such as Handlebars or Jade
+// you can use sendFile when using an html page for exxample, gives the file the content, no matter the type and contents.
+
+// however, you cannot use sendFile with csrfProtection
+
+// this will be for the example of csurf
+app.get('/formcsurf', csrfProtection, function (req, res) {
+    // pass the csrfToken to the view
+
+    //tokenVal =  req.csrfToken();
+    //res.json({csrfToken: tokenVal });
+
+    //res.render('send', { csrfToken: req.csrfToken() });
+
+    //res.cookie('XSRF-TOKEN', req.csrfToken());
+
+    // var token = req.csrfToken();
+    // res.cookie('XSRF-TOKEN', token);
+    // res.locals.csrfToken = token;
+    // console.log("csrf token = " + token);
+    res.render('formcsurf.html', { csrfToken: req.csrfToken() });
+    //res.render('send', { csrfToken: req.csrfToken() })
+
+    //res.sendFile('formcsurf.html', { root: websiteStaticDirName, csrfToken: req.csrfToken() });
+})
+
+app.post('/processcsurf', parseForm, csrfProtection, function (req, res) {
+    res.send('data is being processed');
+})
 
 
 
@@ -221,25 +316,3 @@ app.listen(port, () => {        // this will listen on the provided port
 })();
 
 
-// example of serving a single static file, usually I would not do this I would do a directory
-app.get('/about', (req, res) => {
-    res.sendFile('singlestatic.html', { root: "single_static_file" });
-});
-
-// if yuo do this, you can set it in one single step
-app.use('/aboutTestStatic', express.static('staticdirExample'));
-// now you can go to http://localhost:3000/aboutTestStatic/singlestaticTest.html
-// to see everything in the static directory "staticdirExample"
-
-
-
-// this function is for the compression package, if something shouldn't be compressed we can add that header
-function shouldCompress(req, res) {
-    if (req.headers['x-no-compression']) {
-        // don't compress responses with this request header
-        return false
-    }
-
-    // fallback to standard filter function
-    return compression.filter(req, res)
-}
