@@ -73,17 +73,31 @@ app.use(helmet());  // adds in the helmet middleware to increase security by rem
 
 
 
+var cookieSession = require('cookie-session')
 
 
+app.set('trust proxy', 1) // trust first proxy
+app.use(cookieSession({     // set up our cookie sessions
+    name: 'session',
+    keys: ['key1', 'key2']
+}))
 
 
+// app.use(function (req, res, next) {
+//     // Update views
+//     req.session.views = (req.session.views || 0) + 1
 
-
+//     // Write response
+//     res.end(req.session.views + ' views')
+// })
 
 
 // get is basically the read
 app.get('/', (req, res) => {        // the / or route is looking for the root url path, which in our case is just http://localhost:port/ 
-    res.send('Hello World!')
+    req.session.views = (req.session.views || 0) + 1;   // this is related to the cookie session
+    res.send('Hello World!' + req.session.views);   // cookie session with hello world
+
+
     // Cookies that have not been signed
     //console.log('Cookies: ', req.cookies)     // use this to parse cookies out
 
@@ -209,7 +223,7 @@ function shouldCompress(req, res) {
 
 
 // setup route middlewares
-var csrfProtection = csrf({ cookie: true})
+var csrfProtection = csrf({ cookie: true })
 var parseForm = bodyParser.urlencoded({ extended: false })
 app.use(cookieParser());
 
