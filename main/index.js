@@ -17,6 +17,13 @@ var compression = require('compression');
 var responseTime = require('response-time');
 var helmet = require("helmet");
 var cookieSession = require('cookie-session');
+var bcrypt = require('bcrypt');
+
+
+// for bcrypt
+const saltRounds = 10;
+const myPlaintextPassword = 'sf0/\/\aP4$$fdsw0rD';
+const someOtherPlaintextPassword = 'not_bacon53';
 
 
 // we will piece in the express session for use here

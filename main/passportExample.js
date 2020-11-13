@@ -6,6 +6,10 @@ const websiteStaticDirName = "website_static";
 var GoogleStrategy = require('passport-google-oauth20');
 var TwitterStrategy = require('passport-twitter');
 const port = 3000;
+var bcrypt = require('bcrypt');
+
+
+
 
 
 const mongoose = require('mongoose');
@@ -74,6 +78,15 @@ async function connectPassportWithMongoose(app) {
         password: String
     });
 
+    // UserDetail.methods.generateHash = function(password) {
+    //     return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+    // };
+
+    // UserDetail.methods.validPassword = function(password) {
+    //     return bcrypt.compareSync(password, this.password);
+    // };
+    
+
     UserDetail.plugin(passportLocalMongoose);   // this inputs the plugin
 
     //                       1. name param in database of collection   2.ref to schema       3. name assigned to collection in mongoose
@@ -139,6 +152,15 @@ async function connectPassportWithMongoose(app) {
         (req, res) => res.sendFile('private.html', { root: websiteStaticDirName })
     );
 
+    app.get('/logoutHere',
+        connectEnsureLogin.ensureLoggedIn('loginPassport'),     // this guards our routes to make sure we are logged in first
+        function (req, res) {
+            console.log("logging out");
+            req.logout();
+            res.sendFile('logout.html', { root: websiteStaticDirName });
+        }
+    );
+
     app.get('/userPassport',
         connectEnsureLogin.ensureLoggedIn('loginPassport'),     // this guards our routes to make sure we are logged in first
         (req, res) => res.send({ user: req.user })      // returns information about the user that is currently logged in
@@ -146,11 +168,11 @@ async function connectPassportWithMongoose(app) {
 
 
 
-
+    
 
     var userDetailRecords = await UserDetails.find({}); // get all the records in the Model that has been created and connected up to
     // console.log(userDetailRecords.length);
-    console.log(userDetailRecords[0]);
+    console.log("userDetailRecords: " + userDetailRecords[0]);
 
     // this will do a check first to see if 
     var userDetailRecords = await UserDetails.find({ username: 'paul' }); // get all the records in the Model that has been created and connected up to
@@ -158,7 +180,10 @@ async function connectPassportWithMongoose(app) {
     if (userDetailRecords.length == 0) {
         //  passport-local-mongoose .register users in our database
         // using  passport-local-mongoose .register it will salt the password for us
-        UserDetails.register({ username: 'paul', active: false }, 'paul');  // creates the username
+
+        //console.log("newuser", newUser);
+
+        UserDetails.register({ username: "paul", active: false }, "paul1");  // creates the username
         console.log("user paul has been created");
 
         // UserDetails.register({ username: 'jay', active: false }, 'jayPassword');
