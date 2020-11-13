@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> Login </title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <form action="/loginPassport" method="post">
+    <div class="title">
+      <h3>Login2</h3>
+    </div>
+    <div class="field">
+      <label>Username:</label>
+      <input type="text" name="username" />
+      <br />
+    </div>
+    <div class="field">
+      <label>Password:</label>
+      <input type="password" name="password" required />
+    </div>
+    <div class="field">
+      <input class="submit-btn" type="submit" value="Submit" required />
+    </div>
+    <label id="error-message"></label>          
+  </form>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);      // this gets the parameters we are passing, pass/login
+    const info = urlParams.get('info');     // the parameter name is info
+
+    if(info) {
+      const errorMessage = document.getElementById("error-message");    // if we get an error message we can put that in the info
+      errorMessage.innerText = info;
+      errorMessage.style.display = "block";     // sets it to block so we can make it visible
+    }
+  </script>
+</body>
+</html>

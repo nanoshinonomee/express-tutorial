@@ -1,43 +1,23 @@
-
-const express = require('express');
-var cookieParser = require('cookie-parser')
-var csrf = require('csurf')
-
-const app = express();
-const port = 3000;
-const localHostString = `http://localhost:${port}`  // string literal templayes using acutes `
-
-const callHandlerExample = require('./appCallHandler');
-
-
-
-const websiteStaticDirName = "website_static";
-
-
+// requirements
+var express = require('express');
+var cookieParser = require('cookie-parser');
+var csrf = require('csurf');
+var callHandlerExample = require('./appCallHandler');
+var mongoose = require('mongoose');
+var passport = require('passport');
 var mongo = require('mongodb');
-var MongoClient = mongo.MongoClient;
+var passportLocalMongoose = require('passport-local-mongoose');
+var GoogleStrategy = require('passport-google-oauth20');
+var TwitterStrategy = require('passport-twitter');
+var connectEnsureLogin = require('connect-ensure-login');     // routes for our login passport example
+var got = require('got');
+var bodyParser = require('body-parser');
+var favicon = require('serve-favicon');
+var compression = require('compression');
+var responseTime = require('response-time');
+var helmet = require("helmet");
+var cookieSession = require('cookie-session');
 
-
-// this is for the login passport example
-const mongoose = require('mongoose');
-const passport = require('passport');
-const passportLocalMongoose = require('passport-local-mongoose');
-// routes for our login passport example
-const connectEnsureLogin = require('connect-ensure-login');
-
-const got = require('got');
-const bodyParser = require('body-parser');
-
-
-// if you need to serve a view, you can use EJS in this way, this is needed for csurf and other safety mechanisms.
-app.set('views', websiteStaticDirName);
-app.engine('html', require('ejs').renderFile);
-
-
-
-
-
-app.use(express.static(websiteStaticDirName));  // this allows the static serving of all webpages in the website_static page
 
 // we will piece in the express session for use here
 const expressSession = require('express-session')({
@@ -47,42 +27,44 @@ const expressSession = require('express-session')({
 });
 
 
-// we will serve up our favicon
-var favicon = require('serve-favicon');
-app.use(favicon("./favicon/favicon.jpg"));
+// creates app, port, and our localhost string
+const app = express();
+const port = 3000;
+const localHostString = `http://localhost:${port}`  // string literal templayes using acutes `
+
+const websiteStaticDirName = "website_static";  // sets our directory where our primary html pages will be
+app.use(express.static(websiteStaticDirName));  // this allows the static serving of all webpages in the website_static page
+
+app.use(favicon("./favicon/favicon.jpg"));  // we will serve up our favicon
+
+var MongoClient = mongo.MongoClient;    // this gets the MongoClient, declared here so it can work for the other js modules (i think...)    
+
+// if you need to serve a view, you can use EJS in this way, this is needed for csurf and other safety mechanisms.
+app.set('views', websiteStaticDirName);
+app.engine('html', require('ejs').renderFile);
 
 // used for compression with our app
-var compression = require('compression');
 app.use(compression({ filter: shouldCompress }));   // this is a reference to the function, shouldCompress
 // if a response doesn't need to be compressed it should have the no compression header
 
-
-
-// adds response time headers automatically
-var responseTime = require('response-time')
-app.use(responseTime())
+app.use(responseTime());    // adds response time headers automatically
 // if you need this you can find examples to easily use this in error handling
 // but for now I am not going to include it
 
-
-const helmet = require("helmet");
 app.use(helmet());  // adds in the helmet middleware to increase security by removing some of the headers out of http requests
 // this works after me applying it after writing all the other examples
 
 
-
-
-
-var cookieSession = require('cookie-session')
-
-
-app.set('trust proxy', 1) // trust first proxy
+app.set('trust proxy', 1) // trust first proxy for our cookie-session sessions
 app.use(cookieSession({     // set up our cookie sessions
     name: 'session',
-    keys: ['key1', 'key2']
+    keys: ['key1', 'key2'],
+    // configuration below for the google authentication
+    maxAge: 24 * 60 * 60 * 1000, // One day in milliseconds
+    keys: ['randomstringhere']
 }))
 
-
+// this is a basic example of how you can attach the cookie sessions to every single route, not that you would want to do that.
 // app.use(function (req, res, next) {
 //     // Update views
 //     req.session.views = (req.session.views || 0) + 1
@@ -90,6 +72,11 @@ app.use(cookieSession({     // set up our cookie sessions
 //     // Write response
 //     res.end(req.session.views + ' views')
 // })
+
+app.use(bodyParser.json()); // allows express to properly parse out json using this route type. 
+app.use(bodyParser.urlencoded({ extended: true })); // this is for better security I assume
+app.use(expressSession);
+
 
 
 // get is basically the read
@@ -126,8 +113,6 @@ app.patch('/', (req, res) => {        // the / or route is looking for the root 
 app.delete('/', (req, res) => {        // the / or route is looking for the root url path, which in our case is just http://localhost:port/ 
     res.send('del!')
 })
-
-
 
 app.get('/testpath', (req, res) => {       // this should happen when going to  http://localhost:port/testpath
     res.send('Hello Test Paadddddaaath!')
@@ -168,9 +153,7 @@ app.get("/users/:id1&:id2", function (req, res) {
 
 
 
-app.use(bodyParser.json()); // allows express to properly parse out json using this route type. 
-app.use(bodyParser.urlencoded({ extended: true })); // this is for better security I assume
-app.use(expressSession);
+
 
 
 app.post("/userstuff", function (req, res) {
@@ -315,17 +298,32 @@ app.listen(port, () => {        // this will listen on the provided port
     // before I do passport, I need to get a database implemented, looks like I'm going to be using mongoDB
     // I will also use mongoose for easier connecting and data object management
     const passportExampleReq = require('./passportExample');
+
     await passportExampleReq.connectPassportWithMongoose(app);
+    //await passportExampleReq.connectPassportWithGoogle(app);
+    //await passportExampleReq.connectPassportWithTwitter(app);
+
+    // // I don't think this if else will work
+
+    // var loggingInWithMongoose = true;
+    // if(loggingInWithMongoose){
+        
+    // }
+    // var loggingInWithGoogle = true;
+    // if(loggingInWithGoogle){
+        
+    // }
+    // var loggingInWithTwitter = true;
+    // if(loggingInWithTwitter){
+        
+    // }
+
 
     // example using passport called here
     // no longer used
     //passportExampleReq.passportExampleFunc(app);
     // need to do a post
     //passportExampleReq.callPassportExample();
-
-
-
-
 
 })();
 

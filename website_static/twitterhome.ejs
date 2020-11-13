@@ -1,0 +1,5 @@
+<% if (!user) { %>
+    <p>Welcome! Please <a href="/twitterlogin">log in</a>.</p>
+  <% } else { %>
+    <p>Hello, <%= user.username %>. View your <a href="/twitterprofile">profile</a> or <a href="/twitterlogout">logout</a>.</p>
+  <% } %>
